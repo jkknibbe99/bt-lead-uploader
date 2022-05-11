@@ -1,0 +1,6 @@
+{
+    "data_name": "chromedriver",
+    "description": "Chromedriver",
+    "version": 100,
+    "directory": "/"
+}

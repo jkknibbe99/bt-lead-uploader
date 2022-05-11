@@ -1,0 +1,7 @@
+{
+    "data_name": "init",
+    "description": "Initialization",
+    "bot_path": "src/bot/bot.py",
+    "config_path": "src/bot/config.py",
+    "leads_file_path": "C:\\Users\\joshua\\Desktop\\tmp\\Door and Drawer Front Build Report NE 220429.xlsx"
+}
