@@ -157,3 +157,7 @@ data/
 
 # Status files
 status_log.txt
+
+# Additional venv files
+Scripts/
+pyvenv.cfg
