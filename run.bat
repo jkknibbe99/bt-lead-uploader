@@ -5,4 +5,23 @@ if not exist %~dp0data/init_data.json (
     python %~dp0config.py
 )
 
-python %~dp0bot.py
+rem check if a venv exists
+if exist Scripts (
+    echo Scripts directory exists
+    echo Running bot
+    call %~dp0\Scripts\activate
+    rem run bot
+    python %~dp0bot.py
+) else (
+    echo Virtual environment not created.
+    echo Creating Virtual environment now...
+    set venvpath=%~dp0
+    set venvpath=^"%venvpath:~0,-1%^"
+    python -m venv %venvpath%
+    call %~dp0\Scripts\activate
+    pip install -r requirements.txt
+    rem run bot
+    python %~dp0bot.py
+)
+
+
