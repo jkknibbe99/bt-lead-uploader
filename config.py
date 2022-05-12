@@ -1,6 +1,7 @@
 import json, os
 from pathlib import Path
 from tkinter import Tk, Label, Text, Button
+from ask_filepath import askForFilePath
 
 class DataCategories():
     INIT_DATA = 'init_data'
@@ -59,22 +60,25 @@ def writeJSON(data_dict: dict):
     # Look through dict for null values
     for key in data_dict:
         if data_dict[key] is None:
-            window = Tk()
-            window.title(data_dict['description'] + ' | ' + key)
-            window.geometry('400x100')
-            lbl = Label(window, text='Please enter ' + data_dict['description'] + ' ' + key + ': ')
-            txt = Text(window, height = 1, width = 100)
-            def setInput(e):
-                input = txt.get('1.0', 'end-2c')
-                data_dict[key] = input
-                window.destroy()
-            window.bind('<Return>', setInput)  # Bind Enter button to setInput()
-            btn = Button(window, text='Submit', command=lambda:setInput(''))
-            lbl.pack()
-            txt.pack()
-            btn.pack()
-            window.state('zoomed')  # Maximize tk window
-            window.mainloop()
+            if not key.find('path'):
+                window = Tk()
+                window.title(data_dict['description'] + ' | ' + key)
+                window.geometry('400x100')
+                lbl = Label(window, text='Please enter ' + data_dict['description'] + ' ' + key + ': ')
+                txt = Text(window, height = 1, width = 100)
+                def setInput(e):
+                    input = txt.get('1.0', 'end-2c')
+                    data_dict[key] = input
+                    window.destroy()
+                window.bind('<Return>', setInput)  # Bind Enter button to setInput()
+                btn = Button(window, text='Submit', command=lambda:setInput(''))
+                lbl.pack()
+                txt.pack()
+                btn.pack()
+                window.state('zoomed')  # Maximize tk window
+                window.mainloop()
+            else:
+                askForFilePath('Leads Excel File')
     
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
