@@ -60,7 +60,7 @@ def writeJSON(data_dict: dict):
     # Look through dict for null values
     for key in data_dict:
         if data_dict[key] is None:
-            if not key.find('path'):
+            if not key == 'leads_file_path':
                 window = Tk()
                 window.title(data_dict['description'] + ' | ' + key)
                 window.geometry('400x100')
@@ -76,9 +76,10 @@ def writeJSON(data_dict: dict):
                 txt.pack()
                 btn.pack()
                 window.state('zoomed')  # Maximize tk window
+                txt.focus()
                 window.mainloop()
             else:
-                askForFilePath('Leads Excel File')
+                data_dict[key] = askForFilePath('Leads Excel File')
     
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
