@@ -1,13 +1,17 @@
-import json, os
+import json, os, sys
 from pathlib import Path
 from tkinter import Tk, Label, Text, Button
 from ask_filepath import askForFilePath
+from ask_directory import askForDirectory
 
 class DataCategories():
     INIT_DATA = 'init_data'
     BT_LOGIN_DATA = 'bt_login_data'
     CHROMEDRIVER_DATA = 'chromedriver_data'
-    STATUS_EMAIL_DATA = 'status_email_data'
+    FIREFOXDRIVER_DATA = 'firefoxdriver_data'
+    LEADS_DATA = 'leads_data'
+    EH_GMAIL_LOGIN_DATA = 'eh_gmail_login_data'
+    # STATUS_EMAIL_DATA = 'status_email_data'
 
 # Data
 init_data = {
@@ -15,7 +19,6 @@ init_data = {
     'description': 'Initialization',
     'bot_path': 'src/bot/bot.py',  # relative to the run_bot.bat file
     'config_path': 'src/bot/config.py', # relative to the run_bot.bat file
-    'leads_file_path': None
 }
 
 bt_login_data = {
@@ -30,16 +33,42 @@ chromedriver_data = {
     'data_name': 'chromedriver',
     'description': 'Chromedriver',
     'version': 100,
-    'directory': '/'  # relative to the bot.py file
+    'directory': ''  # relative to the bot.py file (no slash at start)
 }
 
-status_email_data = {
-    'data_name': 'status_email',
-    'description': 'Status Email',
-    'sender': 'jknibbe.dev@gmail.com',
-    'receiver': 'jknibbe.dev@gmail.com',
-    'password': None,
+firefoxdriver_data = {
+    'data_name': 'firefoxdriver',
+    'description': 'Firefox Driver',
+    'version': 0.31,
+    'directory': '',  # relative to the bot.py file (no slash at start)
+    'profile_path': '/Users/joshua/AppData/Roaming/Mozilla/Firefox/Profiles/32pouvxh.default'
 }
+
+leads_data = {
+    'data_name': 'leads',
+    'description': 'Leads Data',
+    'leads_filepath': None,
+    'leads_file_download_url': None,
+    'leads_archive_directory': None,
+    'new_lead_sheet_1_url': None,
+    'new_lead_sheet_2_url': None,
+    'bt_lead_upload_sheet_url': None
+}
+
+eh_gmail_login_data = {
+    'data_name': 'eh_gmail_login',
+    'description': 'EH Gmail Login Data',
+    'email': None,
+    'password': None
+}
+
+# status_email_data = {
+#     'data_name': 'status_email',
+#     'description': 'Status Email',
+#     'sender': 'jknibbe.dev@gmail.com',
+#     'receiver': 'jknibbe.dev@gmail.com',
+#     'password': None,
+# }
 
 
 # Get configuration data
@@ -51,7 +80,10 @@ def get_config_data(category: str, key: str):
         data_dict = writeJSON(globals()[category])
     for k in data_dict:
         if k == key:
-            return data_dict[key]
+            if data_dict[key] == None:
+                return writeJSON(data_dict)[key]
+            else:
+                return data_dict[key]
     raise ValueError('the parameter \'key\' given (' + key + ') does not exist in ' + category)
     
 
@@ -60,15 +92,21 @@ def writeJSON(data_dict: dict):
     # Look through dict for null values
     for key in data_dict:
         if data_dict[key] is None:
-            if not key == 'leads_file_path':
+            if key.find('filepath') > -1:  # If key contains 'filepath'
+                data_dict[key] = askForFilePath(key)
+            elif key.find('directory') > -1:  # If key contains 'directory'
+                data_dict[key] = askForDirectory(key)
+            else:
                 window = Tk()
                 window.title(data_dict['description'] + ' | ' + key)
                 window.geometry('400x100')
                 lbl = Label(window, text='Please enter ' + data_dict['description'] + ' ' + key + ': ')
-                txt = Text(window, height = 1, width = 100)
+                txt = Text(window, height = 1, width = 150)
                 def setInput(e):
-                    input = txt.get('1.0', 'end-2c')
-                    data_dict[key] = input
+                    inpt = txt.get('1.0', 'end-1c')
+                    if inpt.endswith('\n'):
+                        inpt = inpt[:-1]
+                    data_dict[key] = inpt
                     window.destroy()
                 window.bind('<Return>', setInput)  # Bind Enter button to setInput()
                 btn = Button(window, text='Submit', command=lambda:setInput(''))
@@ -78,8 +116,7 @@ def writeJSON(data_dict: dict):
                 window.state('zoomed')  # Maximize tk window
                 txt.focus()
                 window.mainloop()
-            else:
-                data_dict[key] = askForFilePath('Leads Excel File')
+                
     
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
