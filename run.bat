@@ -15,9 +15,7 @@ if exist Scripts (
 ) else (
     echo Virtual environment not created.
     echo Creating Virtual environment now...
-    set venvpath=%~dp0
-    set venvpath=^"%venvpath:~0,-1%^"
-    python -m venv %venvpath%
+    python -m venv %~dp0
     call %~dp0\Scripts\activate
     pip install -r requirements.txt
     rem run bot
