@@ -33,7 +33,7 @@ chromedriver_data = {
     'data_name': 'chromedriver',
     'description': 'Chromedriver',
     'version': 100,
-    'directory': ''  # relative to the bot.py file (no slash at start)
+    'directory': '/chromedrivers/'  # relative to the bot.py file
 }
 
 firefoxdriver_data = {
