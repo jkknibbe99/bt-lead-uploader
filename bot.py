@@ -6,8 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException, SessionNotCreatedException, WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from win32com.client import Dispatch
 
 from config import DataCategories, get_config_data
 from bot_status import newStatus
@@ -15,24 +16,48 @@ from bot_status import newStatus
 
 # Initialize globals
 driver = None
+chrome_version = None
 chrome_options = None
 actionChains = None
+
+MIN_CHROME_VERSION = 102 # What chromedriver version to start at
 
 # Browser to be used
 BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome', 'Firefox'
 
+
+# Find the current chrome version
+def get_version_via_com(filename):
+    parser = Dispatch("Scripting.FileSystemObject")
+    try:
+        version = parser.GetFileVersion(filename)
+    except Exception:
+        return None
+    return version
+
+# Set the chrome version global
+def set_chrome_version_global():
+    paths = [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+             r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"]
+    version = list(filter(None, [get_version_via_com(p) for p in paths]))[0]
+    version = version[:version.find('.')]  # Grab just the first number
+    # Set to global
+    global chrome_version
+    chrome_version = version
 
 # Initialize chrome driver
 def initDriver():
     # Declare driver
     global driver
     # Chrome
-    if BROWSER == 'Chrome':
-        cd_directory = get_config_data(DataCategories.CHROMEDRIVER_DATA, 'directory').replace('/', '\\')
-        chromedriver_path = os.path.realpath(__file__) + '\\' + cd_directory + 'chromedriver_100_win.exe'
-        driver = webdriver.Chrome(executable_path=chromedriver_path)
-    if BROWSER == 'Undetected Chrome':
-        driver = uc.Chrome()
+    if BROWSER == 'Chrome' or BROWSER == 'Undetected Chrome':
+        set_chrome_version_global()
+        directory = get_config_data(DataCategories.CHROMEDRIVER_DATA, 'directory').replace('/', '\\')
+        chromedriver_path = (os.path.realpath(__file__)[::-1][(os.path.realpath(__file__)[::-1].find('\\')+1):])[::-1] + directory + 'chromedriver_' + str(chrome_version) + '_win.exe'
+        if BROWSER == 'Chrome':
+            driver = webdriver.Chrome(executable_path=chromedriver_path)
+        elif BROWSER == 'Undetected Chrome':
+            driver = uc.Chrome(executable_path=chromedriver_path)
     # Firefox
     elif BROWSER == 'Firefox':
         try:
