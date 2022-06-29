@@ -38,7 +38,8 @@ def get_version_via_com(filename):
 # Set the chrome version global
 def set_chrome_version_global():
     paths = [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-             r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"]
+             r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+             r"C:\Users\jordan\AppData\Local\Google\Chrome\Application\chrome.exe"]
     version = list(filter(None, [get_version_via_com(p) for p in paths]))[0]
     version = version[:version.find('.')]  # Grab just the first number
     # Set to global
