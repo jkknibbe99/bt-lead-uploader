@@ -121,9 +121,13 @@ def writeJSON(data_dict: dict):
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
   
-    # Writing to .json
+    # Check for data directory
     dirname = Path(os.path.dirname(__file__))
-    filepath = os.path.join(dirname, 'data\\' + data_dict['data_name'] + '_data.json')
+    data_dir_path = os.path.join(dirname, 'data')
+    if not os.path.isdir(data_dir_path):  # If data directory does not exist, create it
+        os.mkdir(data_dir_path)
+    # Writing to .json
+    filepath = data_dir_path + '\\' + data_dict['data_name'] + '_data.json'
     with open(filepath, "w") as outfile:
         outfile.write(json_object)
     return data_dict
