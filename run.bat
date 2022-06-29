@@ -22,4 +22,5 @@ if exist Scripts (
     python %~dp0bot.py
 )
 
-
+echo program done
+pause
