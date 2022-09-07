@@ -25,6 +25,8 @@ MIN_CHROME_VERSION = 102 # What chromedriver version to start at
 # Browser to be used
 BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome', 'Firefox'
 
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 # Find the current chrome version
 def get_version_via_com(filename):
@@ -93,8 +95,8 @@ def downloadLeadsFile():
     i = 0
     num_itrs = 1000
     for i in range(num_itrs):
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print('Checking for download...')
+        clear()
+        print('Waiting for download...')
         if os.path.exists(get_config_data(DataCategories.LEADS_DATA, 'leads_filepath')):
             break
     if i == num_itrs-1:
@@ -102,6 +104,8 @@ def downloadLeadsFile():
         print('Leads file failed to download.')
         input('Press [ENTER] to close program ')
         sys.exit()
+    else:
+        print('Download successful!')
     # Copy leads file to archive location. Append timestamp to filename
     timestamp = '_' + str(datetime.datetime.now()).replace('-','').replace(' ','_').replace(':','')
     timestamp = timestamp[:timestamp.find('.')]
@@ -131,13 +135,16 @@ def btLogin():
 
 # Upload leads file to BuilderTrend
 def btUploadLeads():
+    clear()
+    print('Attempting leads upload')
     # Click import leads button
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="rc-tabs-0-panel-ListView"]/header/a[2]/button'))).click()
     # Select file to upload
     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .UploadButton input')))
     file_input.send_keys(get_config_data(DataCategories.LEADS_DATA, 'leads_filepath'))
     # Click 'Next' button until the results page reached
-    while True:
+    tries = 10
+    for i in range(tries):
         try:
             WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.ImportWizard [data-testid="next"]'))).click()
         except (StaleElementReferenceException, ElementClickInterceptedException): 
@@ -150,14 +157,13 @@ def btUploadLeads():
     # Check if import was successful
     try:
         WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .success-message')))
-    except NoSuchElementException:
-        # newStatus('Import was not successful!', True)
-        print('Import was NOT successful')
+    except (NoSuchElementException, TimeoutException):
+        print('Upload was NOT successful')
         input('Press [ENTER] ')
         sys.exit()
     else:
         # newStatus('Import was successful!', False)
-        print('Import was successful!')
+        print('Upload was successful!')
 
 
 # Login to EH gmail account
