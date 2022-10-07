@@ -87,7 +87,7 @@ def initActionChains():
 def downloadLeadsFile():
     # Delete leads file before new download
     try:
-        os.remove(get_config_data(DataCategories.LEADS_DATA, 'leads_filepath'))
+        os.remove(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
     except Exception as e:
         print(str(e))
     # Download new leads file
@@ -97,7 +97,7 @@ def downloadLeadsFile():
     for i in range(num_itrs):
         clear()
         print('Waiting for download...')
-        if os.path.exists(get_config_data(DataCategories.LEADS_DATA, 'leads_filepath')):
+        if os.path.exists(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')):
             break
     if i == num_itrs-1:
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -110,7 +110,7 @@ def downloadLeadsFile():
     timestamp = '_' + str(datetime.datetime.now()).replace('-','').replace(' ','_').replace(':','')
     timestamp = timestamp[:timestamp.find('.')]
     try:
-        src_filepath = get_config_data(DataCategories.LEADS_DATA, 'leads_filepath')
+        src_filepath = get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')
         filename = os.path.basename(src_filepath)
         dst_filepath = get_config_data(DataCategories.LEADS_DATA, 'leads_archive_directory') + '\\' +filename[:filename.find('.')] + timestamp + '.csv'
         shutil.copyfile(src_filepath, dst_filepath)
@@ -141,7 +141,7 @@ def btUploadLeads():
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="rc-tabs-0-panel-ListView"]/header/a[2]/button'))).click()
     # Select file to upload
     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .UploadButton input')))
-    file_input.send_keys(get_config_data(DataCategories.LEADS_DATA, 'leads_filepath'))
+    file_input.send_keys(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
     # Click 'Next' button until the results page reached
     tries = 10
     for i in range(tries):
