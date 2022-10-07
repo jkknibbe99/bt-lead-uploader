@@ -1,4 +1,4 @@
-import json, os, sys
+import json, os
 from pathlib import Path
 from tkinter import Tk, Label, Text, Button
 from ask_filepath import askForFilePath
@@ -47,7 +47,7 @@ firefoxdriver_data = {
 leads_data = {
     'data_name': 'leads',
     'description': 'Leads Data',
-    'leads_filepath': None,
+    'leads_download_filepath': None,
     'leads_file_download_url': None,
     'leads_archive_directory': None,
     'new_lead_sheet_1_url': None,
@@ -73,6 +73,7 @@ eh_gmail_login_data = {
 
 # Get configuration data
 def get_config_data(category: str, key: str):
+    # print('here')
     dirname = Path(os.path.dirname(__file__))
     filepath = os.path.join(dirname, 'data\\' + category + '.json')
     data_dict = JSONtoDict(filepath)
@@ -116,7 +117,6 @@ def writeJSON(data_dict: dict):
                 window.state('zoomed')  # Maximize tk window
                 txt.focus()
                 window.mainloop()
-                
     
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
@@ -144,5 +144,35 @@ def JSONtoDict(filepath: str):
 
 
 if __name__ == "__main__":
-    # Update the init_data.json file
-    writeJSON(init_data)
+    # Update the the chose data file
+    categories = ['init_data', 'bt_login_data', 'chromedriver_data', 'firefoxdriver_data', 'leads_data', 'eh_gmail_login_data']
+    query_str = 'Select a data category to update:\n'
+    choice = ''
+    for i in range(len(categories)):
+        query_str += '\t(' + str(i) + ') ' + categories[i] + '\n'
+    query_str += '\n'
+    os.system('cls' if os.name == 'nt' else 'clear')
+    while True:
+        response = input(query_str)
+        try:
+            int(response)
+        except ValueError:
+            if response in categories:
+                writeJSON(globals()[response])
+                choice = response
+                break
+            else:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print('Invalid selection. Try again.')
+        else:
+            response = int(response)
+            if response < len(categories):
+                writeJSON(globals()[categories[response]])
+                choice = categories[response]
+                break
+            else:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print('Invalid selection. Try again.')
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(choice, 'updated successfully')
+    
