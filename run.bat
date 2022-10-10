@@ -6,7 +6,7 @@ if not exist %~dp0data/init_data.json (
 )
 
 rem check if a venv exists
-if exist Scripts (
+if exist %~dp0Scripts (
     echo Scripts directory exists
     echo Running bot
     call %~dp0Scripts\activate
@@ -23,4 +23,3 @@ if exist Scripts (
 )
 
 echo program done
-pause
