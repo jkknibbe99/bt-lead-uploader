@@ -25,6 +25,14 @@ MIN_CHROME_VERSION = 102 # What chromedriver version to start at
 # Browser to be used
 BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome', 'Firefox'
 
+# Action booleans
+download_leads_file = True  # Production value: True
+upload_leads_to_bt = True  # Production value: True
+reset_google_sheets = True  # Production value: True
+pause_on_error = False  # Production value: False
+send_status_email = True  # Production value: True
+
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
