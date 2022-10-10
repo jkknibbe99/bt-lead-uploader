@@ -2,7 +2,7 @@ import os, datetime
 from pathlib import Path
 from send_email import sendEmail
 
-BOT_NAME = 'BuilderTrend Lead Importer Bot'
+BOT_NAME = 'BuilderTrend Lead Importer'
 STATUS_LOG_FILEPATH = os.path.join(Path(os.path.dirname(__file__)), 'status_log.txt')
 STATUS_LOG_HEADER = BOT_NAME + ' | Status Log\n========================================='
 
