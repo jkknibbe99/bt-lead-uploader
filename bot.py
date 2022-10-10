@@ -1,5 +1,5 @@
 # Imports
-import os, sys, shutil, datetime, re, time
+import os, sys, shutil, datetime, re, time, csv
 import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -102,8 +102,7 @@ def downloadLeadsFile():
     if i == num_itrs-1:
         os.system('cls' if os.name == 'nt' else 'clear')
         print('Leads file failed to download.')
-        input('Press [ENTER] to close program ')
-        sys.exit()
+        closeChrome()
     else:
         print('Download successful!')
     # Copy leads file to archive location. Append timestamp to filename
@@ -117,8 +116,35 @@ def downloadLeadsFile():
     except Exception as e:
         print('-- ERROR --')
         print(str(e))
-        input('Press [ENTER] to close program ')
-        sys.exit()
+        if send_status_email: newStatus('Could not copy leads download file to archive folder: ' + str(e), True)
+        if pause_on_error: input('Press [Enter]... ')
+        closeChrome()
+    # Check if the csv is blank
+    with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        col_qty = 0
+        blank_csv = True
+        for row in csv_reader:
+            if line_count == 0:
+                for colname in row:
+                    if len(colname) != 0:
+                        col_qty += 1
+                line_count += 1
+            else:
+                for i in range(len(row)):
+                    if i >= 16:
+                        break 
+                    if row[i] != '' and row[i] != ' ':
+                        blank_csv = False
+                        break
+                line_count += 1
+    if blank_csv:
+        no_leads_msg = 'Downloaded Leads csv was empty. No leads to upload.'
+        print(no_leads_msg)
+        if send_status_email: newStatus(no_leads_msg, False)
+        if pause_on_error: input('Press [Enter]... ')
+        closeChrome()
 
 
 # Log into BuilderTrend
@@ -143,12 +169,27 @@ def btUploadLeads():
     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .UploadButton input')))
     file_input.send_keys(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
     # Click 'Next' button until the results page reached
-    tries = 10
-    for i in range(tries):
+    tries = 20
+    itr = 0
+    while itr < tries:
+        # Check if error message is displayed. If so, send status err message and close program
         try:
+            error_container = driver.find_element(By.CSS_SELECTOR, 'div.ant-alert-error')
+        except NoSuchElementException:
+            pass
+        else:
+            err_msg = error_container.find_element(By.CSS_SELECTOR, 'div.ant-alert-description > ul > li').text
+            print('ERROR OCCURED:', err_msg)
+            if send_status_email: newStatus(err_msg, True)
+            if pause_on_error: input('Press [Enter]... ')
+            closeChrome()
+        # Attempt to click "Next" button
+        try:
+            itr += 1
             WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.ImportWizard [data-testid="next"]'))).click()
         except (StaleElementReferenceException, ElementClickInterceptedException): 
             try:
+                # Check for import wizard results container
                 driver.find_element(By.CSS_SELECTOR, '.ImportWizard .importWizardResults')
             except NoSuchElementException:
                 pass
@@ -158,11 +199,12 @@ def btUploadLeads():
     try:
         WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .success-message')))
     except (NoSuchElementException, TimeoutException):
-        print('Upload was NOT successful')
-        input('Press [ENTER] ')
-        sys.exit()
+        err_msg = 'Upload was NOT successful. No element could be found matching ".ImportWizard .success-message"'
+        print(err_msg)
+        if send_status_email: newStatus(err_msg, True)
+        if pause_on_error: input('Press [Enter]... ')
+        closeChrome()
     else:
-        # newStatus('Import was successful!', False)
         print('Upload was successful!')
 
 
@@ -249,13 +291,6 @@ def clearSheets():
     time.sleep(2)
 
 
-# Stop the program
-def stop():  # TODO: remove this and all instances after dev
-    print('Program stopped')
-    input('Press [ENTER] to close program ')
-    closeChrome()
-
-
 # Close chrome driver bot
 def closeChrome():
     os.system('cls' if os.name == 'nt' else 'clear')  #TODO: Uncomment when dev finished
@@ -270,15 +305,18 @@ if __name__ == '__main__':
     try:
         initDriver()
         initActionChains()
-        downloadLeadsFile()
-        btLogin()
-        btUploadLeads()
-        googleLogin()
-        clearSheets()
+        if download_leads_file:
+            downloadLeadsFile()
+        if upload_leads_to_bt:
+            btLogin()
+            btUploadLeads()
+        if reset_google_sheets:
+            googleLogin()
+            clearSheets()
+        if send_status_email: newStatus('Program ran successfully', False)
         closeChrome()
     except Exception as e:
-        # newStatus('Exception raised while running program:\n' + str(e), True)
         print('Error encountered')
-        input('Press [ENTER] to view')
-        raise e
-    sys.exit()
+        if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e), True)
+        if pause_on_error: input('Press [Enter]... ')
+        sys.exit()
