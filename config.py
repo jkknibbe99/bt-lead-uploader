@@ -11,7 +11,7 @@ class DataCategories():
     FIREFOXDRIVER_DATA = 'firefoxdriver_data'
     LEADS_DATA = 'leads_data'
     EH_GMAIL_LOGIN_DATA = 'eh_gmail_login_data'
-    # STATUS_EMAIL_DATA = 'status_email_data'
+    STATUS_EMAIL_DATA = 'status_email_data'
 
 # Data
 init_data = {
@@ -62,13 +62,13 @@ eh_gmail_login_data = {
     'password': None
 }
 
-# status_email_data = {
-#     'data_name': 'status_email',
-#     'description': 'Status Email',
-#     'sender': 'jknibbe.dev@gmail.com',
-#     'receiver': 'jknibbe.dev@gmail.com',
-#     'password': None,
-# }
+status_email_data = {
+    'data_name': 'status_email',
+    'description': 'Status Email',
+    'sender': 'jknibbe.dev@gmail.com',
+    'receiver': 'jknibbe.dev@gmail.com',
+    'password': None,
+}
 
 
 # Get configuration data
@@ -145,7 +145,7 @@ def JSONtoDict(filepath: str):
 
 if __name__ == "__main__":
     # Update the the chose data file
-    categories = ['init_data', 'bt_login_data', 'chromedriver_data', 'firefoxdriver_data', 'leads_data', 'eh_gmail_login_data']
+    categories = ['init_data', 'bt_login_data', 'chromedriver_data', 'firefoxdriver_data', 'leads_data', 'eh_gmail_login_data', 'status_email_data']
     query_str = 'Select a data category to update:\n'
     choice = ''
     for i in range(len(categories)):
