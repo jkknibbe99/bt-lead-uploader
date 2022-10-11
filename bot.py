@@ -327,4 +327,4 @@ if __name__ == '__main__':
         print('Error encountered')
         if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e), True)
         if pause_on_error: input('Press [Enter]... ')
-        sys.exit()
+        closeChrome()
