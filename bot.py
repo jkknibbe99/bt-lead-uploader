@@ -14,6 +14,7 @@ from config import DataCategories, get_config_data
 from bot_status import newStatus
 
 
+
 # Initialize globals
 driver = None
 chrome_version = None
@@ -33,8 +34,10 @@ pause_on_error = False  # Production value: False
 send_status_email = True  # Production value: True
 
 
+# Clear the terminal
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 # Find the current chrome version
 def get_version_via_com(filename):
@@ -44,6 +47,7 @@ def get_version_via_com(filename):
     except Exception:
         return None
     return version
+
 
 # Set the chrome version global
 def set_chrome_version_global():
@@ -55,6 +59,7 @@ def set_chrome_version_global():
     # Set to global
     global chrome_version
     chrome_version = version
+
 
 # Initialize chrome driver
 def initDriver():
