@@ -164,16 +164,26 @@ def downloadLeadsFile():
 
 # Log into BuilderTrend
 def btLogin():
-    # Go to the login url
-    driver.get(get_config_data(DataCategories.BT_LOGIN_DATA, 'login_url'))
-    # Log in
-    driver.find_element(By.XPATH, '//*[@id="username"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'username'))  # Enter username
-    driver.find_element(By.XPATH, '//*[@id="password"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'password'))  # Enter password
-    # Click login button
-    login_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#reactLoginListDiv button')))
-    actionChains.move_to_element(login_btn).click().perform()
-    # Wait for page to load
-    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#reactMainNavigation'))).click()
+    tries = 3
+    success = False
+    for i in range(tries):
+        # Go to the login url
+        driver.get(get_config_data(DataCategories.BT_LOGIN_DATA, 'login_url'))
+        # Log in
+        driver.find_element(By.XPATH, '//*[@id="username"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'username'))  # Enter username
+        driver.find_element(By.XPATH, '//*[@id="password"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'password'))  # Enter password
+        # Click login button
+        login_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#reactLoginListDiv button')))
+        actionChains.move_to_element(login_btn).click().perform()
+        # Wait for page to load
+        try:
+            WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#reactMainNavigation')))
+            success = True
+            break
+        except TimeoutException:
+            pass
+    if not success:
+        raise ValueError('Could not login after ' + str(tries) + ' tries')
 
 
 # Upload leads file to BuilderTrend
@@ -223,7 +233,7 @@ def btUploadLeads(leads_filepath):
         try:
             itr += 1
             WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.ImportWizard [data-testid="next"]'))).click()
-        except (StaleElementReferenceException, ElementClickInterceptedException): 
+        except (StaleElementReferenceException, ElementClickInterceptedException, TimeoutException): 
             try:
                 # Check for import wizard results container
                 driver.find_element(By.CSS_SELECTOR, '.ImportWizard .importWizardResults')
@@ -231,6 +241,7 @@ def btUploadLeads(leads_filepath):
                 pass
             else:
                 break
+        time.sleep(1)
     # Check if import was successful
     try:
         WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .success-message')))
@@ -248,7 +259,7 @@ def btUploadLeads(leads_filepath):
 def moveEmailsToNotes(filepath:str, rows:list):
     new_csv_str = ''
     # Read file
-    with open(filepath) as f:
+    with open(filepath, 'r') as f:
         lines = f.readlines()
         colnames = lines[0].split(',')
         email_col_indx = colnames.index('Email')
@@ -258,7 +269,6 @@ def moveEmailsToNotes(filepath:str, rows:list):
             if lines[i][0] != ',':
                 if i-1 in rows:
                     line = lines[i].split(',')
-                    # print(line)
                     line[notes_col_indx] += '  ' + line[email_col_indx]
                     line[email_col_indx] = ''
                     new_lines.append(','.join(line))
@@ -267,8 +277,9 @@ def moveEmailsToNotes(filepath:str, rows:list):
         new_csv_str = ''.join(new_lines)
 
     # Write file
-    with open(filepath, "w") as outfile:
+    with open(filepath, 'w') as outfile:
         outfile.write(new_csv_str)
+
 
 # Login to EH gmail account
 def googleLogin():
