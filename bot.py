@@ -129,11 +129,7 @@ def downloadLeadsFile():
         dst_filepath = get_config_data(DataCategories.LEADS_DATA, 'leads_archive_directory') + '\\' +filename[:filename.find('.')] + timestamp + '.csv'
         shutil.copyfile(src_filepath, dst_filepath)
     except Exception as e:
-        print('-- ERROR --')
-        print(str(e))
-        if send_status_email: newStatus('Could not copy leads download file to archive folder: ' + str(e), True)
-        if pause_on_error: input('Press [Enter]... ')
-        closeChrome()
+        raise ValueError('Could not copy leads download file to archive folder: ' + str(e))
     # Check if the csv is blank
     with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -226,9 +222,7 @@ def btUploadLeads(leads_filepath):
                 return
             else:
                 print('ERROR OCCURED:', err_msg)
-                if send_status_email: newStatus(err_msg, True)
-                if pause_on_error: input('Press [Enter]... ')
-                closeChrome()
+                raise ValueError(err_msg)
         # Attempt to click "Next" button
         try:
             itr += 1
@@ -248,9 +242,7 @@ def btUploadLeads(leads_filepath):
     except (NoSuchElementException, TimeoutException):
         err_msg = 'Upload was NOT successful. No element could be found matching ".ImportWizard .success-message"'
         print(err_msg)
-        if send_status_email: newStatus(err_msg, True)
-        if pause_on_error: input('Press [Enter]... ')
-        closeChrome()
+        raise ValueError(err_msg)
     else:
         print('Upload was successful!')
 
@@ -405,8 +397,15 @@ def main():
         if send_status_email: newStatus('Program ran successfully', False)
         closeChrome()
     except Exception as e:
+        # Get leads
+        leads_str = ''
+        with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')) as f:
+            lines = f.readlines()
+            for line in lines:
+                if line[0] != ',':
+                    leads_str += line
         print('Error encountered')
-        if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e), True)
+        if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e) + '\n\nLeads that were not imported:\n' + leads_str, True)
         if pause_on_error: input('Press [Enter]... ')
         closeChrome()
 
