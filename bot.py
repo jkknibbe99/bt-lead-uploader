@@ -13,6 +13,8 @@ from win32com.client import Dispatch
 from config import DataCategories, get_config_data
 from bot_status import newStatus
 
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 
 # Initialize globals
@@ -170,6 +172,8 @@ def btLogin():
     # Click login button
     login_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#reactLoginListDiv button')))
     actionChains.move_to_element(login_btn).click().perform()
+    # Wait for page to load
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#reactMainNavigation'))).click()
 
 
 # Upload leads file to BuilderTrend
@@ -313,8 +317,24 @@ def closeChrome():
     sys.exit()
 
 
-# Main method
-if __name__ == '__main__':
+# Runs the program with manual lead csv file choosing and no google sheets resetting
+def manual():
+    root = Tk()
+    root.withdraw()
+    filename = askopenfilename()
+    root.destroy()
+    if not filename:
+        print('No file was selected')
+        sys.exit()
+    initDriver()
+    initActionChains()
+    btLogin()
+    btUploadLeads(filename)
+    closeChrome()
+
+
+# Runs complete program 
+def main():
     try:
         initDriver()
         initActionChains()
@@ -333,3 +353,21 @@ if __name__ == '__main__':
         if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e), True)
         if pause_on_error: input('Press [Enter]... ')
         closeChrome()
+
+
+# Main method
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    if not args:
+        main()
+    if len(args) == 1 and (args[0] == '-m' or args[0] == '--manual'):
+        manual()
+    elif len(args) == 1 and (args[0] == '-h' or args[0] == '--help'):
+        print("""
+            {-m|--manual} - runs the program with manual lead csv file choosing and no google sheets resetting\n
+            {-h|--help} - displays up this help page\n
+        """)
+        sys.exit()
+    else:
+        print('Command line args were invalid')
+        sys.exit()
