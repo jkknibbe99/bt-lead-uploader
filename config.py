@@ -36,17 +36,10 @@ chromedriver_data = {
     'directory': '/chromedrivers/'  # relative to the bot.py file
 }
 
-firefoxdriver_data = {
-    'data_name': 'firefoxdriver',
-    'description': 'Firefox Driver',
-    'version': 0.31,
-    'directory': '',  # relative to the bot.py file (no slash at start)
-    'profile_path': '/Users/joshua/AppData/Roaming/Mozilla/Firefox/Profiles/32pouvxh.default'
-}
-
 leads_data = {
     'data_name': 'leads',
     'description': 'Leads Data',
+    'leads_bt_url': None,
     'leads_download_filepath': None,
     'leads_file_download_url': None,
     'leads_archive_directory': None,
@@ -90,6 +83,7 @@ def get_config_data(category: str, key: str):
 
 # Write a data dict to a json file
 def writeJSON(data_dict: dict):
+    print('writing JSON...')
     # Look through dict for null values
     for key in data_dict:
         if data_dict[key] is None:
@@ -115,8 +109,15 @@ def writeJSON(data_dict: dict):
                 txt.pack()
                 btn.pack()
                 window.state('zoomed')  # Maximize tk window
+                # Move tk window to front of other windows
+                window.lift()
+                window.attributes('-topmost',True)
+                window.after_idle(window.attributes,'-topmost',False)
+                # Activate txt
                 txt.focus()
                 window.mainloop()
+
+    print('all data aquired')
     
     # Serializing jsons
     json_object = json.dumps(data_dict, indent = 4)
@@ -130,6 +131,7 @@ def writeJSON(data_dict: dict):
     filepath = data_dir_path + '\\' + data_dict['data_name'] + '_data.json'
     with open(filepath, "w") as outfile:
         outfile.write(json_object)
+    print('Finished writing')
     return data_dict
 
 

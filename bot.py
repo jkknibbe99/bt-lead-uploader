@@ -177,14 +177,16 @@ def btLogin():
 
 
 # Upload leads file to BuilderTrend
-def btUploadLeads():
+def btUploadLeads(leads_filepath):
     clear()
     print('Attempting leads upload')
+    # Go to BT leads url
+    driver.get(get_config_data(DataCategories.LEADS_DATA, 'leads_bt_url'))
     # Click import leads button
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="rc-tabs-0-panel-ListView"]/header/a[2]/button'))).click()
     # Select file to upload
     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .UploadButton input')))
-    file_input.send_keys(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
+    file_input.send_keys(leads_filepath)
     # Click 'Next' button until the results page reached
     tries = 20
     itr = 0
@@ -195,11 +197,28 @@ def btUploadLeads():
         except NoSuchElementException:
             pass
         else:
-            err_msg = error_container.find_element(By.CSS_SELECTOR, 'div.ant-alert-description > ul > li').text
-            print('ERROR OCCURED:', err_msg)
-            if send_status_email: newStatus(err_msg, True)
-            if pause_on_error: input('Press [Enter]... ')
-            closeChrome()
+            err_msg = ''
+            for elem in error_container.find_elements(By.CSS_SELECTOR, 'div.ant-alert-description > ul > li'):
+                err_msg += elem.text + '\n' 
+            # Check if it is an email error
+            if "This contact's primary email is associated with another account" in err_msg:
+                error_rows = []
+                for err in err_msg.split('\n'):
+                    match = re.search(r'Row\s\d+,', err)
+                    try:
+                        match2 = re.search(r'\d+', str(match.group()))
+                    except AttributeError:
+                        pass
+                    else:
+                        error_rows.append(int(match2.group()))
+                moveEmailsToNotes(leads_filepath, error_rows)
+                btUploadLeads(leads_filepath)
+                return
+            else:
+                print('ERROR OCCURED:', err_msg)
+                if send_status_email: newStatus(err_msg, True)
+                if pause_on_error: input('Press [Enter]... ')
+                closeChrome()
         # Attempt to click "Next" button
         try:
             itr += 1
@@ -224,6 +243,32 @@ def btUploadLeads():
     else:
         print('Upload was successful!')
 
+
+# Moves lead emails from the email column to the end of the General notes column for every row given (1st lead is on row 0)
+def moveEmailsToNotes(filepath:str, rows:list):
+    new_csv_str = ''
+    # Read file
+    with open(filepath) as f:
+        lines = f.readlines()
+        colnames = lines[0].split(',')
+        email_col_indx = colnames.index('Email')
+        notes_col_indx = colnames.index('General Notes')
+        new_lines = []
+        for i in range(len(lines)):
+            if lines[i][0] != ',':
+                if i-1 in rows:
+                    line = lines[i].split(',')
+                    # print(line)
+                    line[notes_col_indx] += '  ' + line[email_col_indx]
+                    line[email_col_indx] = ''
+                    new_lines.append(','.join(line))
+                else:
+                    new_lines.append(lines[i])
+        new_csv_str = ''.join(new_lines)
+
+    # Write file
+    with open(filepath, "w") as outfile:
+        outfile.write(new_csv_str)
 
 # Login to EH gmail account
 def googleLogin():
@@ -342,7 +387,7 @@ def main():
             downloadLeadsFile()
         if upload_leads_to_bt:
             btLogin()
-            btUploadLeads()
+            btUploadLeads(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
         if reset_google_sheets:
             googleLogin()
             clearSheets()
