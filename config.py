@@ -10,7 +10,7 @@ class DataCategories():
     CHROMEDRIVER_DATA = 'chromedriver_data'
     FIREFOXDRIVER_DATA = 'firefoxdriver_data'
     LEADS_DATA = 'leads_data'
-    EH_GMAIL_LOGIN_DATA = 'eh_gmail_login_data'
+    EMAIL_DATA = 'email_data'
     STATUS_EMAIL_DATA = 'status_email_data'
 
 # Data
@@ -48,11 +48,13 @@ leads_data = {
     'bt_lead_upload_sheet_url': None
 }
 
-eh_gmail_login_data = {
-    'data_name': 'eh_gmail_login',
-    'description': 'EH Gmail Login Data',
-    'email': None,
-    'password': None
+email_data = {
+    'data_name': 'email_data',
+    'description': 'Email Data',
+    'eh_email': None,
+    'eh_email_password': None,
+    'steve_email': None,
+    'jordan_email': None
 }
 
 status_email_data = {

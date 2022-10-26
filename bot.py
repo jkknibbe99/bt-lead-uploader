@@ -73,9 +73,37 @@ def initDriver():
     global driver
     # Chrome
     if BROWSER == 'Chrome' or BROWSER == 'Undetected Chrome':
-                driver = uc.Chrome(executable_path=chromedriver_path)
-        except WebDriverException:
-            raise ValueError('Could not open chrome with given chromedriver.\nChrome version: ' + chrome_version + '\nChromeDriver path: ' + chromedriver_path)
+        if use_chromedriver_autoinstaller:
+            chromedriver_autoinstaller.install()  # Check if the current version of chromedriver exists
+                                      # and if it doesn't exist, download it automatically,
+                                      # then add chromedriver to path
+            driver = webdriver.Chrome()
+        else:
+            # Download and install latest chromedriver
+            installLatestChromedriver()
+            # Try identified version
+            set_chrome_version_global()
+            directory = get_config_data(DataCategories.CHROMEDRIVER_DATA, 'directory').replace('/', '\\')
+            chromedriver_path = (os.path.realpath(__file__)[::-1][(os.path.realpath(__file__)[::-1].find('\\')+1):])[::-1] + directory + 'chromedriver_' + str(chrome_version) + '_win.exe'
+            try:
+                if BROWSER == 'Chrome':
+                    driver = webdriver.Chrome(executable_path=chromedriver_path)
+                elif BROWSER == 'Undetected Chrome':
+                    driver = uc.Chrome(executable_path=chromedriver_path)
+            except WebDriverException:
+                # Try latest chromedriver
+                latest = 0
+                for filename in os.listdir('chromedrivers'):
+                    if filename.startswith('chromedriver_'): 
+                        if int(filename[13:16]) > latest: latest = int(filename[13:16])
+                chromedriver_path = (os.path.realpath(__file__)[::-1][(os.path.realpath(__file__)[::-1].find('\\')+1):])[::-1] + directory + 'chromedriver_' + str(latest) + '_win.exe'
+                try:
+                    if BROWSER == 'Chrome':
+                        driver = webdriver.Chrome(executable_path=chromedriver_path)
+                    elif BROWSER == 'Undetected Chrome':
+                        driver = uc.Chrome(executable_path=chromedriver_path)
+                except WebDriverException:
+                    raise ValueError('Could not open chrome with given chromedriver.\nChrome version: ' + str(latest) + '\nChromeDriver path: ' + chromedriver_path)
     # Firefox
     elif BROWSER == 'Firefox':
         try:
@@ -414,12 +442,25 @@ def closeChrome():
 
 # Runs the program with manual lead csv file choosing and no google sheets resetting
 def manual():
-    fixDuplicateEmails(filename)
-    initDriver()
-    initActionChains()
-    btLogin()
-    btUploadLeads(filename)
-    closeChrome()
+    try:
+        root = Tk()
+        root.withdraw()
+        filename = askopenfilename()
+        root.destroy()
+        if not filename:
+            print('No file was selected')
+            sys.exit()
+        fixDuplicateEmails(filename)
+        initDriver()
+        initActionChains()
+        btLogin()
+        btUploadLeads(filename)
+        closeChrome()
+    except Exception as e: 
+        if pause_on_error:
+            print(str(e))
+            input('Press [Enter]... ')
+        closeChrome()
 
 
 # Runs complete program 
