@@ -9,12 +9,11 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException, WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from win32com.client import Dispatch
-
 from config import DataCategories, get_config_data
 from bot_status import newStatus
-
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+import pandas as pd
 
 
 # Initialize globals
@@ -248,6 +247,48 @@ def btUploadLeads(leads_filepath):
         raise ValueError(err_msg)
     else:
         print('Upload was successful!')
+        # Check for skipped records
+        try:
+            driver.find_element(By.XPATH, '//button/span[text()="Download skipped records"]').click()
+        except NoSuchElementException:
+            pass  # No skipped records
+        else:
+            # Read xls file (skipped records)
+            downloads_dir = 'C:\\Users\\btauto\\Downloads\\'
+            xls_filename = 'LeadsImportReport.xls'
+            xls_filepath = downloads_dir + xls_filename
+            read_file = pd.read_excel(xls_filepath)
+            # Write the dataframe object into csv file
+            csv_filename = 'LeadsImportReport.csv'
+            csv_filepath = downloads_dir + csv_filename
+            read_file.to_csv (csv_filepath, index = None, header=True)
+            # Delete LeadsImportReport.xls
+            os.remove(xls_filepath)
+            # Raise error showing skipped leads
+            skipped_lines = None
+            with open(csv_filepath, 'r') as f:
+                skipped_lines = f.readlines()
+                skipped_leads_str = '\n'.join(skipped_lines)
+                raise ValueError('Most leads were imported, however some leads were skipped:\n' + skipped_leads_str)
+
+
+# Finds any duplicate emails in csv and then moves them to general notes column
+def fixDuplicateEmails(filepath:str):
+    # Read file
+    with open(filepath, 'r') as f:
+        lines = f.readlines()
+        colnames = lines[0].split(',')
+        email_col_index = colnames.index('Email')
+        emails = []
+        duplicate_email_rows = []
+        for i in range(len(lines)):
+            if lines[i][0] != ',':
+                line = lines[i].split(',')
+                if line[email_col_index] not in emails:
+                    emails.append(line[email_col_index])
+                else:
+                    duplicate_email_rows.append(i-1)
+    moveEmailsToNotes(filepath, duplicate_email_rows)
 
 
 # Moves lead emails from the email column to the end of the General notes column for every row given (1st lead is on row 0)
@@ -381,6 +422,7 @@ def manual():
     if not filename:
         print('No file was selected')
         sys.exit()
+    fixDuplicateEmails(filename)
     initDriver()
     initActionChains()
     btLogin()
@@ -396,6 +438,7 @@ def main():
         if download_leads_file:
             downloadLeadsFile()
         if upload_leads_to_bt:
+            fixDuplicateEmails(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
             btLogin()
             btUploadLeads(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'))
         if reset_google_sheets:
