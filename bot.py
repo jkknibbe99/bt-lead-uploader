@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException, WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from win32com.client import Dispatch
 
@@ -72,10 +72,13 @@ def initDriver():
         set_chrome_version_global()
         directory = get_config_data(DataCategories.CHROMEDRIVER_DATA, 'directory').replace('/', '\\')
         chromedriver_path = (os.path.realpath(__file__)[::-1][(os.path.realpath(__file__)[::-1].find('\\')+1):])[::-1] + directory + 'chromedriver_' + str(chrome_version) + '_win.exe'
-        if BROWSER == 'Chrome':
-            driver = webdriver.Chrome(executable_path=chromedriver_path)
-        elif BROWSER == 'Undetected Chrome':
-            driver = uc.Chrome(executable_path=chromedriver_path)
+        try:
+            if BROWSER == 'Chrome':
+                driver = webdriver.Chrome(executable_path=chromedriver_path)
+            elif BROWSER == 'Undetected Chrome':
+                driver = uc.Chrome(executable_path=chromedriver_path)
+        except WebDriverException:
+            raise ValueError('Could not open chrome with given chromedriver.\nChrome version: ' + chrome_version + '\nChromeDriver path: ' + chromedriver_path)
     # Firefox
     elif BROWSER == 'Firefox':
         try:
@@ -358,9 +361,13 @@ def clearSheets():
 
 # Close chrome driver bot
 def closeChrome():
-    os.system('cls' if os.name == 'nt' else 'clear')  #TODO: Uncomment when dev finished
+    if not pause_on_error: os.system('cls' if os.name == 'nt' else 'clear')
     print('Closing driver...')
-    driver.quit()
+    try:
+        driver.quit()
+    except AttributeError:
+        # Driver not created
+        pass
     print('\n\nDriver Closed\n')
     sys.exit()
 
@@ -406,7 +413,9 @@ def main():
                     leads_str += line
         print('Error encountered')
         if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e) + '\n\nLeads that were not imported:\n' + leads_str, True)
-        if pause_on_error: input('Press [Enter]... ')
+        if pause_on_error:
+            print(str(e))
+            input('Press [Enter]... ')
         closeChrome()
 
 
