@@ -11,9 +11,12 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from win32com.client import Dispatch
 from config import DataCategories, get_config_data
 from bot_status import newStatus
+from send_email import sendEmail
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import pandas as pd
+from chromedrivers.install_latest_chromedriver import installLatestChromedriver
+import chromedriver_autoinstaller
 
 
 # Initialize globals
@@ -28,11 +31,13 @@ MIN_CHROME_VERSION = 102 # What chromedriver version to start at
 BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome', 'Firefox'
 
 # Action booleans
+use_chromedriver_autoinstaller = True  # Production value: True
 download_leads_file = True  # Production value: True
 upload_leads_to_bt = True  # Production value: True
 reset_google_sheets = True  # Production value: True
 pause_on_error = False  # Production value: False
 send_status_email = True  # Production value: True
+send_notification_email = True  # Production value: True
 
 
 # Clear the terminal
@@ -68,13 +73,6 @@ def initDriver():
     global driver
     # Chrome
     if BROWSER == 'Chrome' or BROWSER == 'Undetected Chrome':
-        set_chrome_version_global()
-        directory = get_config_data(DataCategories.CHROMEDRIVER_DATA, 'directory').replace('/', '\\')
-        chromedriver_path = (os.path.realpath(__file__)[::-1][(os.path.realpath(__file__)[::-1].find('\\')+1):])[::-1] + directory + 'chromedriver_' + str(chrome_version) + '_win.exe'
-        try:
-            if BROWSER == 'Chrome':
-                driver = webdriver.Chrome(executable_path=chromedriver_path)
-            elif BROWSER == 'Undetected Chrome':
                 driver = uc.Chrome(executable_path=chromedriver_path)
         except WebDriverException:
             raise ValueError('Could not open chrome with given chromedriver.\nChrome version: ' + chrome_version + '\nChromeDriver path: ' + chromedriver_path)
@@ -245,8 +243,9 @@ def btUploadLeads(leads_filepath):
         err_msg = 'Upload was NOT successful. No element could be found matching ".ImportWizard .success-message"'
         print(err_msg)
         raise ValueError(err_msg)
-    else:
+    else:  # Import was successful
         print('Upload was successful!')
+        if send_notification_email: sendEmail('BuilderTend Lead Importer: NOTIFICATION', '\nNew leads have been uploaded to BuilderTrend!\n\nhttps://buildertrend.net/Leads/LeadsList.aspx', [get_config_data(DataCategories.EMAIL_DATA, 'steve_email')])
         # Check for skipped records
         try:
             driver.find_element(By.XPATH, '//button/span[text()="Download skipped records"]').click()
@@ -415,13 +414,6 @@ def closeChrome():
 
 # Runs the program with manual lead csv file choosing and no google sheets resetting
 def manual():
-    root = Tk()
-    root.withdraw()
-    filename = askopenfilename()
-    root.destroy()
-    if not filename:
-        print('No file was selected')
-        sys.exit()
     fixDuplicateEmails(filename)
     initDriver()
     initActionChains()
