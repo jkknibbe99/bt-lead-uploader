@@ -1,6 +1,7 @@
 import os, datetime
 from pathlib import Path
 from send_email import sendEmail
+from config import get_config_data, DataCategories
 
 BOT_NAME = 'BuilderTrend Lead Importer'
 STATUS_LOG_FILEPATH = os.path.join(Path(os.path.dirname(__file__)), 'status_log.txt')
@@ -15,9 +16,9 @@ def newStatus(message: str, error: bool):
         f.write(status_msg)
     # Send status email
     if error:
-        sendEmail(BOT_NAME+' Error', status_msg)
+        sendEmail(BOT_NAME+' Error', status_msg, [get_config_data(DataCategories.EMAIL_DATA, 'status_receiver_email')])
     else:
-        sendEmail(BOT_NAME+' Success', status_msg)
+        sendEmail(BOT_NAME+' Success', status_msg, [get_config_data(DataCategories.EMAIL_DATA, 'status_receiver_email')])
 
 # Main function (view or clear the status log)
 def main():

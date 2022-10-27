@@ -28,7 +28,7 @@ actionChains = None
 MIN_CHROME_VERSION = 102 # What chromedriver version to start at
 
 # Browser to be used
-BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome', 'Firefox'
+BROWSER = 'Undetected Chrome'  # Options: 'Chrome', 'Undetected Chrome'
 
 # Action booleans
 use_chromedriver_autoinstaller = True  # Production value: True
@@ -77,7 +77,14 @@ def initDriver():
             chromedriver_autoinstaller.install()  # Check if the current version of chromedriver exists
                                       # and if it doesn't exist, download it automatically,
                                       # then add chromedriver to path
-            driver = webdriver.Chrome()
+            #Removes navigator.webdriver flag to allow fully undetected
+            option = webdriver.ChromeOptions()
+            option.add_argument('--disable-blink-features=AutomationControlled')
+            #Open Browser
+            if BROWSER == 'Chrome':
+                driver = webdriver.Chrome(options=option)
+            elif BROWSER == 'Undetected Chrome':
+                driver = uc.Chrome(options=option)
         else:
             # Download and install latest chromedriver
             installLatestChromedriver()
@@ -104,17 +111,6 @@ def initDriver():
                         driver = uc.Chrome(executable_path=chromedriver_path)
                 except WebDriverException:
                     raise ValueError('Could not open chrome with given chromedriver.\nChrome version: ' + str(latest) + '\nChromeDriver path: ' + chromedriver_path)
-    # Firefox
-    elif BROWSER == 'Firefox':
-        try:
-            profile = webdriver.FirefoxProfile(get_config_data(DataCategories.FIREFOXDRIVER_DATA, 'profile_path'))
-            profile.set_preference('dom.webdriver.enabled', False)
-            profile.set_preference('useAutomationExtension', False)
-            profile.update_preferences()
-            desired = DesiredCapabilities.FIREFOX
-            driver = webdriver.Firefox(firefox_profile=profile, desired_capabilities=desired)
-        except Exception as e:
-            print(str(e))
     else:
         raise ValueError('Not set up for this browser yet (' + BROWSER + ')')
     driver.maximize_window()
@@ -349,9 +345,9 @@ def googleLogin():
     try:
         driver.get('https://accounts.google.com/')
         # enter email and password
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#identifierId'))).send_keys(get_config_data(DataCategories.EH_GMAIL_LOGIN_DATA, 'email'))
+        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#identifierId'))).send_keys(get_config_data(DataCategories.EMAIL_DATA, 'eh_email'))
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#identifierNext button'))).click()
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#password input'))).send_keys(get_config_data(DataCategories.EH_GMAIL_LOGIN_DATA, 'password'))
+        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#password input'))).send_keys(get_config_data(DataCategories.EMAIL_DATA, 'eh_email_password'))
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#passwordNext button'))).click()
     except Exception as e:
         print('ERROR: Could not log into google account')

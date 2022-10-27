@@ -8,10 +8,10 @@ class DataCategories():
     INIT_DATA = 'init_data'
     BT_LOGIN_DATA = 'bt_login_data'
     CHROMEDRIVER_DATA = 'chromedriver_data'
-    FIREFOXDRIVER_DATA = 'firefoxdriver_data'
     LEADS_DATA = 'leads_data'
     EMAIL_DATA = 'email_data'
-    STATUS_EMAIL_DATA = 'status_email_data'
+
+categories = ['init_data', 'bt_login_data', 'chromedriver_data', 'leads_data', 'email_data']
 
 # Data
 init_data = {
@@ -49,20 +49,15 @@ leads_data = {
 }
 
 email_data = {
-    'data_name': 'email_data',
+    'data_name': 'email',
     'description': 'Email Data',
     'eh_email': None,
     'eh_email_password': None,
+    'status_sender_email': 'jknibbe.dev@gmail.com',
+    'status_receiver_email': 'jknibbe.dev@gmail.com',
+    'status_email_password': None,
     'steve_email': None,
     'jordan_email': None
-}
-
-status_email_data = {
-    'data_name': 'status_email',
-    'description': 'Status Email',
-    'sender': 'jknibbe.dev@gmail.com',
-    'receiver': 'jknibbe.dev@gmail.com',
-    'password': None,
 }
 
 
@@ -149,7 +144,6 @@ def JSONtoDict(filepath: str):
 
 if __name__ == "__main__":
     # Update the the chose data file
-    categories = ['init_data', 'bt_login_data', 'chromedriver_data', 'firefoxdriver_data', 'leads_data', 'eh_gmail_login_data', 'status_email_data']
     query_str = 'Select a data category to update:\n'
     choice = ''
     for i in range(len(categories)):
