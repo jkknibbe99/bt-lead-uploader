@@ -363,8 +363,21 @@ def clearSheets():
         print('trying url...')
         driver.get(new_lead_sheet_1_url)
     print('url reached')
+    time.sleep(10)  # wait 10 seconds for scripts to load
+    # Check if Sign in error is displayed
+    try:
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.docs-error-dialog')))
+    except NoSuchElementException:
+        pass
+    else:
+        time.sleep(15)  # If error msg displayed, wait another 15 secs to let google sign-in get recognized
     # Click 'Clear Sheet' button
-    while True:
+    cleared = False
+    finish_xpaths_to_check = [
+        '//div[@id="docs-butterbar-container"]/div/div/span[text()="Finished script"]',
+        '//div[@id="docs-butterbar-container"]/div/div[@role="alert" and text()="Finished script"]'
+        ]
+    for finish_elem_xpath in finish_xpaths_to_check:
         print('attempting click')
         try:
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#fixed_right .waffle-borderless-embedded-object-container div:nth-child(1)'))).click()
@@ -377,10 +390,13 @@ def clearSheets():
                 closeChrome()
         else:
             try:
-                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//div[@id="docs-butterbar-container"]/div/div[@role="alert" and text()="Finished script"]')))
+                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, finish_elem_xpath)))
+                cleared = True
                 break
             except TimeoutException:
                 pass
+    if not cleared:
+        raise ValueError('Unable to clear 1st sheet')
     
     ## Lead Sheet 2
     # Open new lead sheet 2
@@ -389,8 +405,14 @@ def clearSheets():
         print('trying url...')
         driver.get(new_lead_sheet_2_url)
     print('url reached')
+    time.sleep(10)  # wait 20 seconds for scripts to load
     # Click 'Clear Sheet' button
-    while True:
+    cleared = False
+    finish_xpaths_to_check = [
+        '//div[@id="docs-butterbar-container"]/div/div/span[text()="Finished script"]',
+        '//div[@id="docs-butterbar-container"]/div/div[@role="alert" and text()="Finished script"]'
+        ]
+    for finish_elem_xpath in finish_xpaths_to_check:
         print('attempting click')
         try:
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#fixed_right .waffle-borderless-embedded-object-container div:nth-child(1)'))).click()
@@ -403,10 +425,13 @@ def clearSheets():
                 closeChrome()
         else:
             try:
-                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//div[@id="docs-butterbar-container"]/div/div[@role="alert" and text()="Finished script"]')))
+                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, finish_elem_xpath)))
+                cleared = True
                 break
             except TimeoutException:
                 pass
+    if not cleared:
+        raise ValueError('Unable to clear 2nd sheet')
 
 
     ## Lead Sheet 3
