@@ -363,6 +363,7 @@ def clearSheets():
         print('trying url...')
         driver.get(new_lead_sheet_1_url)
     print('url reached')
+    print('Waiting for page to load...')
     time.sleep(10)  # wait 10 seconds for scripts to load
     # Check if Sign in error is displayed
     try:
@@ -370,7 +371,10 @@ def clearSheets():
     except NoSuchElementException:
         pass
     else:
-        time.sleep(15)  # If error msg displayed, wait another 15 secs to let google sign-in get recognized
+        # Click sign-in button
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.docs-error-dialog > .modal-dialog-buttons > button'))).click()
+        print('Waiting for page to load...')
+        time.sleep(10)  # Wait another 10 secs for page load
     # Click 'Clear Sheet' button
     cleared = False
     finish_xpaths_to_check = [
