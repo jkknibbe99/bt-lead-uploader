@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException, WebDriverException
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from win32com.client import Dispatch
 from config import DataCategories, get_config_data
 from bot_status import newStatus
