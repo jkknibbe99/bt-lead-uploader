@@ -212,7 +212,7 @@ def btUploadLeads(leads_filepath):
     # Go to BT leads url
     driver.get(get_config_data(DataCategories.LEADS_DATA, 'leads_bt_url'))
     # Click import leads button
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="rc-tabs-0-panel-ListView"]/header/a[2]/button'))).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//header[contains(@class, "ListActions")]/a/button[@data-testid="importLeadsWizard"]'))).click()
     # Select file to upload
     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ImportWizard .UploadButton input')))
     file_input.send_keys(leads_filepath)
@@ -220,7 +220,7 @@ def btUploadLeads(leads_filepath):
     tries = 20
     itr = 0
     while itr < tries:
-        # Check if error message is displayed. If so, send status err message and close program
+        # Check if error message is displayed
         try:
             error_container = driver.find_element(By.CSS_SELECTOR, 'div.ant-alert-error')
         except NoSuchElementException:
@@ -275,6 +275,7 @@ def btUploadLeads(leads_filepath):
         except NoSuchElementException:
             pass  # No skipped records
         else:
+            time.sleep(10)  # Wait for xl file to download
             # Read xls file (skipped records)
             downloads_dir = 'C:\\Users\\btauto\\Downloads\\'
             xls_filename = 'LeadsImportReport.xls'
@@ -286,12 +287,17 @@ def btUploadLeads(leads_filepath):
             read_file.to_csv (csv_filepath, index = None, header=True)
             # Delete LeadsImportReport.xls
             os.remove(xls_filepath)
-            # Raise error showing skipped leads
+            # Send email containing skipped leads
             skipped_lines = None
             with open(csv_filepath, 'r') as f:
                 skipped_lines = f.readlines()
                 skipped_leads_str = '\n'.join(skipped_lines)
-                raise ValueError('Most leads were imported, however some leads were skipped:\n' + skipped_leads_str)
+                msg = 'Most leads were imported, however some leads were skipped:\n' + skipped_leads_str
+                if send_status_email: 
+                    try:
+                        newStatus(msg, True)
+                    except UnicodeEncodeError:
+                        newStatus(msg.encode('utf-8'), True)
 
 
 # Finds any duplicate emails in csv and then moves them to general notes column
@@ -326,10 +332,17 @@ def moveEmailsToNotes(filepath:str, rows:list):
         for i in range(len(lines)):
             if lines[i][0] != ',':
                 if i-1 in rows:
+                    quote_strs = []
+                    while lines[i].find('"') != -1:
+                        first_quotes = lines[i].find('"')
+                        second_quotes = first_quotes + lines[i][first_quotes+1:].find('"') + 2
+                        quote_strs.append(lines[i][first_quotes:second_quotes])
+                        lines[i] = lines[i][:first_quotes] + '{}' + lines[i][second_quotes:]
                     line = lines[i].split(',')
                     line[notes_col_indx] += '  ' + line[email_col_indx]
                     line[email_col_indx] = ''
-                    new_lines.append(','.join(line))
+                    line_str = ','.join(line).format(*quote_strs)
+                    new_lines.append(line_str)
                 else:
                     new_lines.append(lines[i])
         new_csv_str = ''.join(new_lines)
@@ -453,7 +466,7 @@ def clearSheets():
 
 # Close chrome driver bot
 def closeChrome():
-    if not pause_on_error: os.system('cls' if os.name == 'nt' else 'clear')
+    # if not pause_on_error: os.system('cls' if os.name == 'nt' else 'clear')
     print('Closing driver...')
     try:
         driver.quit()
@@ -504,15 +517,12 @@ def main():
         if send_status_email: newStatus('Program ran successfully', False)
         closeChrome()
     except Exception as e:
-        # Get leads
-        leads_str = ''
-        with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')) as f:
-            lines = f.readlines()
-            for line in lines:
-                if line[0] != ',':
-                    leads_str += line
-        print('Error encountered')
-        if send_status_email: newStatus('ERROR encountered while running program:\n ' + str(e) + '\n\nLeads that were not imported:\n' + leads_str, True)
+        msg = 'ERROR encountered while running program:\n ' + str(e)
+        if send_status_email: 
+            try:
+                newStatus(msg, True)
+            except UnicodeEncodeError:
+                newStatus(msg.encode('utf-8'), True)
         if pause_on_error:
             print(str(e))
             input('Press [Enter]... ')

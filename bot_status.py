@@ -10,7 +10,7 @@ STATUS_LOG_HEADER = BOT_NAME + ' | Status Log\n=================================
 # Add a new Status
 def newStatus(message: str, error: bool):
     now = datetime.datetime.now()
-    status_msg = '\n\n- ' + str(now) + ' - ' + ('ERROR: ' if error else 'STATUS: ') + message + '\n'
+    status_msg = '\n\n- ' + str(now) + ' - ' + ('ERROR: ' if error else 'STATUS: ') + str(message) + '\n'
     # Write to status log
     with open(STATUS_LOG_FILEPATH, 'a') as f:
         f.write(status_msg)
