@@ -189,8 +189,8 @@ def btLogin():
         # Go to the login url
         driver.get(get_config_data(DataCategories.BT_LOGIN_DATA, 'login_url'))
         # Log in
-        driver.find_element(By.XPATH, '//*[@id="username"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'username'))  # Enter username
-        driver.find_element(By.XPATH, '//*[@id="password"]').send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'password'))  # Enter password
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#username'))).send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'username'))
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#password'))).send_keys(get_config_data(DataCategories.BT_LOGIN_DATA, 'password'))
         # Click login button
         login_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#reactLoginListDiv button')))
         actionChains.move_to_element(login_btn).click().perform()
