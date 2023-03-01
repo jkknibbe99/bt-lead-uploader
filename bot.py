@@ -35,6 +35,7 @@ download_leads_file = True  # Production value: True
 upload_leads_to_bt = True  # Production value: True
 reset_google_sheets = True  # Production value: True
 pause_on_error = False  # Production value: False
+throw_error = False  # Production value: False
 send_status_email = True  # Production value: True
 send_notification_email = True  # Production value: True
 
@@ -154,7 +155,7 @@ def downloadLeadsFile():
     except Exception as e:
         raise ValueError('Could not copy leads download file to archive folder: ' + str(e))
     # Check if the csv is blank
-    with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath')) as csv_file:
+    with open(get_config_data(DataCategories.LEADS_DATA, 'leads_download_filepath'), 'r', encoding='utf8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         col_qty = 0
@@ -177,7 +178,6 @@ def downloadLeadsFile():
         no_leads_msg = 'Downloaded Leads csv was empty. No leads to upload.'
         print(no_leads_msg)
         if send_status_email: newStatus(no_leads_msg, False)
-        if pause_on_error: input('Press [Enter]... ')
         closeChrome()
 
 
@@ -303,7 +303,7 @@ def btUploadLeads(leads_filepath):
 # Finds any duplicate emails in csv and then moves them to general notes column
 def fixDuplicateEmails(filepath:str):
     # Read file
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf8') as f:
         lines = f.readlines()
         colnames = lines[0].split(',')
         email_col_index = colnames.index('Email')
@@ -323,7 +323,7 @@ def fixDuplicateEmails(filepath:str):
 def moveEmailsToNotes(filepath:str, rows:list):
     new_csv_str = ''
     # Read file
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf8') as f:
         lines = f.readlines()
         colnames = lines[0].split(',')
         email_col_indx = colnames.index('Email')
@@ -466,7 +466,6 @@ def clearSheets():
 
 # Close chrome driver bot
 def closeChrome():
-    # if not pause_on_error: os.system('cls' if os.name == 'nt' else 'clear')
     print('Closing driver...')
     try:
         driver.quit()
@@ -497,6 +496,7 @@ def manual():
         if pause_on_error:
             print(str(e))
             input('Press [Enter]... ')
+        if throw_error: raise e
         closeChrome()
 
 
@@ -526,6 +526,7 @@ def main():
         if pause_on_error:
             print(str(e))
             input('Press [Enter]... ')
+        if throw_error: raise e
         closeChrome()
 
 
