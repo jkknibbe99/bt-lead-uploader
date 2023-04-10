@@ -323,7 +323,7 @@ def fixDuplicateEmails(filepath:str):
 def moveEmailsToNotes(filepath:str, rows:list):
     new_csv_str = ''
     # Read file
-    with open(filepath, 'r', encoding='utf8') as f:
+    with open(filepath, 'r', encoding='utf8', errors='ignore') as f:
         lines = f.readlines()
         colnames = lines[0].split(',')
         email_col_indx = colnames.index('Email')
